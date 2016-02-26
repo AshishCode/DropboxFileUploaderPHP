@@ -1,8 +1,10 @@
 <?php
+
 	//For debugging
 	error_reporting(E_ALL);
 	ini_set("display_errors", "On");
 
+	//including dropbox libraries
 	require_once "dropbox/lib/Dropbox/autoload.php";
 
 	//setting the default timezone
@@ -10,61 +12,82 @@
 
 	use \Dropbox as dbx;
 
-	$dropbox_config = array(
-	    'key'    => 'fgidjt5uf45ilb1',
-	    'secret' => 'vn3fvk9ygmb3r6x'
-	);
-
-	$appInfo = dbx\AppInfo::loadFromJson($dropbox_config);
-	$webAuth = new dbx\WebAuthNoRedirect($appInfo, "PHP-Example/1.0");
-
-	$accessToken = "sdGUA9ORi2gAAAAAAAABMX5Q_dvehWsPNHCVzliGt1P7flMaqUXFCKil0u6hbd6T";
-
-	$dbxClient = new dbx\Client($accessToken, "PHP-Example/1.0");
-
 	try {
-		//directory traverser
-		// $dir = new DirectoryIterator('/home/ashish/Desktop/backups/daily/mobilebackend';
-		
-		// foreach ($dir as $fileinfo) {
-		//     if (!$fileinfo->isDot()) {
-		//         var_dump($fileinfo->getFilename());
-		//     }
-		// }
 
-		$iterator = new DirectoryIterator(dirname('/home/ashish/Desktop/backups/daily/mobilebackend/*'));
+		//fetching config data
+		$CONFIG_CONTENT = file_get_contents('config.json');
+		$DROPBOX_CONFIG = json_decode($CONFIG_CONTENT, true);
+
+		//accessing config
+		$accessToken = $DROPBOX_CONFIG["ACCESS_TOKEN"];
+		$AppDbDirectoryName = $DROPBOX_CONFIG["APP_DB"];
+		$AuthDbDirectoryName = $DROPBOX_CONFIG["AUTH_DB"];
+
+		//setting up dropbox
+		$appInfo = dbx\AppInfo::loadFromJson($DROPBOX_CONFIG);
+		$webAuth = new dbx\WebAuthNoRedirect($appInfo, "PHP-Example/1.0");	
+		$dbxClient = new dbx\Client($accessToken, "PHP-Example/1.0");
+
+		//iterating through the contents of a app database folder
+		$iterator = new DirectoryIterator(dirname($AppDbDirectoryName));
 		foreach ( $iterator as $fileinfo ) {
-			if(!$fileinfo->isDot())
-	    		
+
+			//excluding the . and .. directories
+			if(!$fileinfo->isDot()) {
+
+				//fetching the file names and file paths
 	    		$fileName = $fileinfo->current()->getFilename();
-	    		$filePath = $fileinfo->current()->getPathName(); // would return object(DirectoryIterator)
-	    		//Uploading the file
+	    		$filePath = $fileinfo->current()->getPathName();
+
+	    		//Uploading the files
 				$f = fopen($filePath, "rb");
-				$result = $dbxClient->uploadFile("/" . $fileName, dbx\WriteMode::add(), $f);
+				$result = $dbxClient->uploadFile("/mobilebackend/" . $fileName, dbx\WriteMode::add(), $f);
 				fclose($f);
-				echo json_encode($result);
+				
+				//removing the uploaded file
+				unlink($filePath);
+
+				//logging the upload result into the log file
+				$logMessage = date("l jS \of F Y h:i:s A") . PHP_EOL . json_encode($result);
+				file_put_contents('uploadLog.log', $logMessage.PHP_EOL , FILE_APPEND);
+
+				echo "File :" . $fileName . " has been uploaded.";
+			}
 		}
 
-		// $it = new FilesystemIterator('/home/ashish/Desktop/backups/daily/mobilebackend');
-		// foreach ($it as $fileinfo) {
-		//   echo $fileinfo->getFilename() . "\n";
-		// }
-		
+		//iterating through the contents of auth database folder
+		$iterator = new DirectoryIterator(dirname($AuthDbDirectoryName));
+		foreach ( $iterator as $fileinfo ) {
+
+			//excluding the . and .. directories
+			if(!$fileinfo->isDot()) {
+
+				//fetching the file names and file paths
+	    		$fileName = $fileinfo->current()->getFilename();
+	    		$filePath = $fileinfo->current()->getPathName();
+
+	    		//Uploading the files
+				$f = fopen($filePath, "rb");
+				$result = $dbxClient->uploadFile("/mobilebackend_sentinel/" . $fileName, dbx\WriteMode::add(), $f);
+				fclose($f);
+				
+				//removing the uploaded file
+				unlink($filePath);
+
+				//logging the upload result into the log file
+				$logMessage = date("l jS \of F Y h:i:s A") . PHP_EOL . json_encode($result);
+				file_put_contents('uploadLog.log', $logMessage.PHP_EOL , FILE_APPEND);
+
+				echo "File :" . $fileName . " has been uploaded.";
+			}
+		}
+			
 	} catch (Exception $e) {
+		//displaying the errors
 		echo $e->getMessage();
+
+		//logging the upload result into the log file
+		$logMessage = date("l jS \of F Y h:i:s A") . PHP_EOL . json_encode($e->getMessage());
+		file_put_contents('uploadLog.log', $logMessage.PHP_EOL , FILE_APPEND);
 	}
-	// $dir = "/home/ashish/Desktop/backups/*";
-	// foreach(glob($dir) as $file)
-	// {
-	//     if(!is_dir($file)) { echo basename($file)."\n";}
-	// }
-
-
-
-	// Uploading the file
-	// $f = fopen("composer.json", "rb");
-	// $result = $dbxClient->uploadFile("/working-draft.txt", dbx\WriteMode::add(), $f);
-	// fclose($f);
-	// echo json_encode($result);
-
 ?>
