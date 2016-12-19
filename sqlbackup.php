@@ -15,7 +15,7 @@
 	try {
 
 		//fetching config data
-		$CONFIG_CONTENT = file_get_contents('config.json');
+		$CONFIG_CONTENT = file_get_contents('/usr/local/bin/mysqlbackup/config.json');
 		$DROPBOX_CONFIG = json_decode($CONFIG_CONTENT, true);
 
 		//accessing config
@@ -31,17 +31,17 @@
 
 		//taking the sql dump for mobilebackend	
 		$output = NULL;
-		$commandSqlDump = 'mysqldump -u'.$sqlUser.' -p'.$sqlPassword.' mobilebackend > dailyBackups/"mobilebackend-"`date +"%d-%m-%Y"`.sql';
+		$commandSqlDump = 'mysqldump -u'.$sqlUser.' -p'.$sqlPassword.' mobilebackend > /usr/local/bin/mysqlbackup/dailyBackups/"mobilebackend-"`date +"%d-%m-%Y"`.sql';
 		exec($commandSqlDump, $output);
-		$commanGzipDump = 'gzip dailyBackups/"mobilebackend-"`date +"%d-%m-%Y"`.sql';		
+		$commanGzipDump = 'gzip /usr/local/bin/mysqlbackup/dailyBackups/"mobilebackend-"`date +"%d-%m-%Y"`.sql';		
 		$output = NULL;
 		exec($commanGzipDump, $output);
 
 		//taking the sql dump for mobilebackend	sentinel
 		$output = NULL;
-		$commandSqlDump = 'mysqldump -u'.$sqlUser.' -p'.$sqlPassword.' mobilebackend > dailyBackups/"mobilebackend_sentinel-"`date +"%d-%m-%Y"`.sql';
+		$commandSqlDump = 'mysqldump -u'.$sqlUser.' -p'.$sqlPassword.' mobilebackend > /usr/local/bin/mysqlbackup/dailyBackups/"mobilebackend_sentinel-"`date +"%d-%m-%Y"`.sql';
 		exec($commandSqlDump, $output);
-		$commanGzipDump = 'gzip dailyBackups/"mobilebackend_sentinel-"`date +"%d-%m-%Y"`.sql';		
+		$commanGzipDump = 'gzip /usr/local/bin/mysqlbackup/dailyBackups/"mobilebackend_sentinel-"`date +"%d-%m-%Y"`.sql';		
 		$output = NULL;
 		exec($commanGzipDump, $output);
 
@@ -69,7 +69,7 @@
 
 				//logging the upload result into the log file
 				$logMessage = date("l jS \of F Y h:i:s A") . PHP_EOL . json_encode($result);
-				file_put_contents('uploadLog.log', $logMessage.PHP_EOL , FILE_APPEND);
+				file_put_contents('/usr/local/bin/mysqlbackup/uploadLog.log', $logMessage.PHP_EOL , FILE_APPEND);
 
 				echo "File :" . $fileName . " has been uploaded.";
 			}
@@ -81,6 +81,6 @@
 
 		//logging the upload result into the log file
 		$logMessage = date("l jS \of F Y h:i:s A") . PHP_EOL . json_encode($e->getMessage());
-		file_put_contents('uploadLog.log', $logMessage.PHP_EOL , FILE_APPEND);
+		file_put_contents('/usr/local/bin/mysqlbackup/uploadLog.log', $logMessage.PHP_EOL , FILE_APPEND);
 	}
 ?>
